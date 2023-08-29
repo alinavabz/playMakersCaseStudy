@@ -43,9 +43,10 @@ const checkTransparency = (newImg, imageData) => {
 
   for (let y = 0; y < newImg.height; y++) {
     for (let x = 0; x < newImg.width; x++) {
+      // This is used to convert a 2D coordinate into a 1D
       const index = (y * newImg.width + x) * 4;
       const distance = Math.sqrt((x - midX) ** 2 + (y - midY) ** 2);
-      if (distance > radius && data[index + 3] === 0) {
+      if (distance < radius && data[index + 3] === 0) {
         alert("There are transparent pixels within the circle.");
         return;
       }
@@ -82,24 +83,18 @@ const convertImage = (uploadedImage) => {
     newImg.width = size;
     newImg.height = size;
 
-    const circleImage = newImg.getContext("2d");
-    circleImage.drawImage(uploadedImage, 0, 0);
-    const imageData = circleImage.getImageData(
-      0,
-      0,
-      newImg.width,
-      newImg.height
-    );
+    const context = newImg.getContext("2d");
+    context.drawImage(uploadedImage, 0, 0);
+    const imageData = context.getImageData(0, 0, newImg.width, newImg.height);
 
+    context.globalCompositeOperation = "destination-in";
+
+    context.beginPath();
+
+    context.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+    context.closePath();
+    context.fill();
     checkTransparency(newImg, imageData);
-
-    circleImage.globalCompositeOperation = "destination-in";
-
-    circleImage.beginPath();
-
-    circleImage.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-    circleImage.closePath();
-    circleImage.fill();
 
     checkHappyCount(imageData, newImg);
     return newImg;
@@ -113,6 +108,7 @@ const convertImage = (uploadedImage) => {
 // comment out below section and update the path
 
 const img = new Image();
+img.src = "wrongSize.png";
 
 img.onload = function () {
   // call below function for all image types
@@ -123,8 +119,6 @@ img.onload = function () {
     document.body.appendChild(newImg);
   }
 };
-
-img.src = "happyAndNonTransparent.png";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<React.StrictMode></React.StrictMode>);
